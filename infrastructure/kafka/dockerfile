@@ -1,0 +1,6 @@
+FROM apache/kafka:4.0.0
+
+LABEL maintainer="Hamza Gourja"
+
+EXPOSE 9092
+EXPOSE 9093

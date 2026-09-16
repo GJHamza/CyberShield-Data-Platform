@@ -1,0 +1,98 @@
+@startuml dashboard_architecture
+
+skinparam backgroundColor #FFFFFF
+skinparam handwritten false
+skinparam shadowcasting false
+skinparam roundcorner 8
+skinparam defaultFontName "Segoe UI", Arial, sans-serif
+skinparam defaultFontSize 11
+
+skinparam package {
+    BorderColor #4A5568
+    FontColor #1A202C
+    FontSize 12
+    FontStyle bold
+    BackgroundColor #FAFAFA
+}
+
+skinparam component {
+    BorderColor #2B6CB0
+    BackgroundColor #EDF2F7
+    FontColor #2D3748
+    FontSize 11
+}
+
+skinparam arrow {
+    Color #4A5568
+    FontColor #2D3748
+    FontSize 10
+}
+
+actor "SOC Security Analyst / User" as user
+
+title **CyberShield Data Platform — Streamlit SOC Dashboard Architecture**
+
+package "1. User Interface Layer (Browser)" #FFE4E6 {
+    component "Streamlit Web UI\n(http://localhost:8501)\n- Custom SOC Dark Theme (custom.css)\n- Non-Blocking JS Auto-Refresh Script\n- Dynamic Session State (st.session_state)" as web_ui
+    user --> web_ui : Interactive Navigation & Inspection
+}
+
+package "2. Streamlit Dashboard Container (cyber-dashboard :8501)" #FFF7ED {
+
+    component "Main Entry Point\n(app.py)\n- Layout & Page Setup (wide)\n- Header & Health Badges\n- Filter Controllers & Event Inspector" as app_main
+
+    package "3. UI Presentation Components (components/)" #F3E8FF {
+        component "KPI Cards\n(kpi_cards.py)\n- Total Events\n- Critical Events\n- Total Anomalies\n- Anomaly Rate %\n- Avg Risk Score" as kpi
+        
+        component "Visual Analytics Charts\n(charts.py / Plotly)\n- Severity Donut Chart\n- ML Risk Level Donut Chart\n- Event Types Bar Chart\n- Anomaly Breakdown\n- Events Timeline Area Chart" as charts
+        
+        component "Monitoring & Threat Intel\n(monitoring.py)\n- Status & Operational Summary\n- Top Source IPs Bar Chart\n- Recent Security Activity List" as monitoring
+        
+        component "Alert & Event Tables\n(alert_tables.py)\n- Alert Center Cards\n- Security Events Table\n- Event Inspector Detail Modal\n- Pagination Controls" as tables
+    }
+
+    package "4. Data Access & Configuration Layer" #E0F2FE {
+        component "Dashboard Config\n(config.py)\n- API_URL (http://cyber-api:8000)\n- HTTP_TIMEOUT (10s)" as config
+        
+        component "HTTP REST API Client\n(api_client.py / CyberShieldAPIClient)\n- requests.Session Pooling\n- Centralized Exception Handling\n- Parameter Cleaning & Encoding" as api_client
+    }
+    
+    web_ui -> app_main : Render Loop
+    app_main --> kpi : Render Overview Metrics
+    app_main --> charts : Render Plotly Analytics
+    app_main --> monitoring : Render Operational Status
+    app_main --> tables : Render Tables & Inspector
+    
+    app_main --> api_client : Invoke Client Methods
+    config ..> api_client : Inject API_URL & Timeout
+}
+
+package "5. External Backend Service (REST API)" #CCFBF1 {
+    component "FastAPI REST Service\n(cyber-api :8000)" as fast_api {
+        portin "GET /api/v1/health" as p_health
+        portin "GET /api/v1/events" as p_events
+        portin "GET /api/v1/events/{id}" as p_event_detail
+        portin "GET /api/v1/alerts" as p_alerts
+        portin "GET /api/v1/statistics/overview" as p_overview
+        portin "GET /api/v1/statistics/severity" as p_sev
+        portin "GET /api/v1/statistics/event-types" as p_types
+        portin "GET /api/v1/statistics/risk-levels" as p_risk
+    }
+    api_client --> fast_api : HTTP / REST JSON Requests
+}
+
+note right of api_client
+  **100% Decoupled Architecture** :
+  The Dashboard connects ONLY to FastAPI.
+  ZERO direct connection to PostgreSQL,
+  Kafka, MinIO, or Spark.
+end note
+
+note right of app_main
+  **Server-Side Filtering** :
+  Filters (severity, risk_level, IP, date)
+  and pagination parameters are sent
+  directly as Query Parameters to FastAPI.
+end note
+
+@enduml

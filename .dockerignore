@@ -1,0 +1,11 @@
+.venv
+.git
+.idea
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+infrastructure/kafka/data
+infrastructure/minio/data
+infrastructure/postgresql/data

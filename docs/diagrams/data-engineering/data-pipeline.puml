@@ -1,0 +1,113 @@
+@startuml data_pipeline
+
+skinparam backgroundColor #FFFFFF
+skinparam handwritten false
+skinparam shadowcasting false
+skinparam roundcorner 8
+skinparam defaultFontName "Segoe UI", Arial, sans-serif
+skinparam defaultFontSize 11
+
+skinparam package {
+    BorderColor #4A5568
+    FontColor #1A202C
+    FontSize 12
+    FontStyle bold
+    BackgroundColor #FAFAFA
+}
+
+skinparam component {
+    BorderColor #2B6CB0
+    BackgroundColor #EDF2F7
+    FontColor #2D3748
+    FontSize 11
+}
+
+skinparam database {
+    BorderColor #2C5282
+    BackgroundColor #EBF8FF
+    FontColor #2B6CB0
+    FontSize 11
+}
+
+skinparam queue {
+    BorderColor #6B46C1
+    BackgroundColor #FAF5FF
+    FontColor #553C9E
+    FontSize 11
+}
+
+skinparam arrow {
+    Color #4A5568
+    FontColor #2D3748
+    FontSize 10
+}
+
+title **CyberShield Data Platform — Data Engineering Pipeline Detailed Architecture**
+
+left to right direction
+
+package "1. Data Generation Layer" #F3E8FF {
+    component "Event Generator\n(generator.py)" as gen
+    component "Kafka Producer\n(producer.py)" as prod
+    gen -> prod : Synthetic Event Dict\n(IPs, Types, Severities, Protocols, Ports)
+}
+
+package "2. Messaging & Ingestion Layer" #FAF5FF {
+    queue "Kafka Broker\ncyber-kafka :9092\nTopic: cyber-events" as kafka
+    component "Kafka Consumer\n(consumer.py)\nGroup: cybershield-bronze-consumer" as cons
+    
+    prod -> kafka : JSON Events Stream
+    kafka -> cons : Poll / Stream Read
+}
+
+package "3. Bronze Storage (Data Lake)" #E0F2FE {
+    database "MinIO S3 Storage\ncyber-minio :9000\nBucket: cybershield-data" as minio_bronze {
+        folder "Bronze Layer\n(bronze/events/YYYY/MM/DD/)" as bronze_dir
+    }
+    cons --> bronze_dir : Save Raw JSON Objects\n[Safe Deserialize & Field Check]
+}
+
+package "4. Spark Processing (ETL)" #FFEDD5 {
+    component "Apache Spark Engine\ncyber-spark" as spark {
+        component "Bronze → Silver ETL\n(bronze_to_silver.py)\n- snake_case Normalization\n- Timestamp & Date/Hour Extraction\n- Quality Check & Deduplication" as b2s
+        component "Silver → Postgres Loader\n(silver_to_postgres.py)\n- Schema Mapping\n- Staging Table Loading\n- Idempotent ON CONFLICT Upsert" as s2p
+    }
+    bronze_dir ..> b2s : Read Multiline JSON\n(recursiveFileLookup)
+}
+
+package "5. Silver Storage (Data Lake)" #E0F2FE {
+    database "MinIO S3 Storage\ncyber-minio :9000\nBucket: cybershield-data" as minio_silver {
+        folder "Silver Layer\n(silver/events/event_date=YYYY-MM-DD/)" as silver_dir
+    }
+    b2s --> silver_dir : Write Snappy Parquet\n(Partitioned by event_date)
+    silver_dir ..> s2p : Read Structured Parquet
+}
+
+package "6. Data Warehouse" #E0E7FF {
+    database "PostgreSQL 16\ncyber-postgres :5432\nDatabase: cyber_platform" as pg {
+        table "security_events_staging\n(Temporary Staging Table)" as staging
+        table "security_events\n(Target Table - Unique event_id)" as sec_events
+    }
+    s2p --> staging : JDBC Overwrite Write
+    staging --> sec_events : INSERT INTO security_events\nSELECT FROM staging\nON CONFLICT (event_id) DO NOTHING
+}
+
+note bottom of cons
+  **Quality Check 1 (Ingestion)** :
+  Validates presence & non-nullness of:
+  event_id, event_type, timestamp, source_ip, severity.
+end note
+
+note bottom of b2s
+  **Quality Check 2 (Spark)** :
+  Trims strings, normalizes lowercase severities,
+  filters _corrupt_record, deduplicates on event_id.
+end note
+
+note bottom of sec_events
+  **Quality Check 3 (Postgres)** :
+  Unique constraint on event_id + Primary Key (id)
+  guarantees 100% idempotency & 0 duplicates.
+end note
+
+@enduml

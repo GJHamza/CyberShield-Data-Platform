@@ -1,0 +1,10 @@
+kafka-python
+minio
+python-dotenv
+pyspark==3.5.6
+pandas
+numpy
+scikit-learn
+joblib
+sqlalchemy
+psycopg2-binary

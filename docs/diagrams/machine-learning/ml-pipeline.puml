@@ -1,0 +1,109 @@
+@startuml ml_pipeline
+
+skinparam backgroundColor #FFFFFF
+skinparam handwritten false
+skinparam shadowcasting false
+skinparam roundcorner 8
+skinparam defaultFontName "Segoe UI", Arial, sans-serif
+skinparam defaultFontSize 11
+
+skinparam package {
+    BorderColor #4A5568
+    FontColor #1A202C
+    FontSize 12
+    FontStyle bold
+    BackgroundColor #FAFAFA
+}
+
+skinparam component {
+    BorderColor #2B6CB0
+    BackgroundColor #EDF2F7
+    FontColor #2D3748
+    FontSize 11
+}
+
+skinparam database {
+    BorderColor #2C5282
+    BackgroundColor #EBF8FF
+    FontColor #2B6CB0
+    FontSize 11
+}
+
+skinparam arrow {
+    Color #4A5568
+    FontColor #2D3748
+    FontSize 10
+}
+
+title **CyberShield Data Platform — Machine Learning Pipeline Architecture**
+
+package "1. Data Source (PostgreSQL Warehouse)" #E0E7FF {
+    database "PostgreSQL 16\ncyber-postgres :5432" as pg {
+        table "security_events\n(Raw Event Facts Table)\n- event_id (PK/UNIQUE)\n- timestamp\n- event_type, severity\n- source_ip, destination_ip\n- protocol, ports" as sec_events
+    }
+}
+
+package "2. Data Ingestion & Preprocessing" #F3E8FF {
+    component "Data Loader\n(data_loader.py)\nSQLAlchemy SQL Query:\nSELECT * FROM security_events" as loader
+    component "Data Preprocessing\n(preprocessing.py)\n- String Trimming & Null Imputation ('unknown')\n- Case Normalization (lower/UPPER)\n- Datetime UTC Parsing & Port Casting" as prep
+    
+    sec_events --> loader : Fetch Records
+    loader -> prep : Pandas DataFrame
+}
+
+package "3. Feature Engineering" #E0F2FE {
+    component "Feature Extractor\n(feature_engineering.py)\nExtracts 12 Numerical Features:\n1. severity_encoded\n2. event_type_encoded\n3. protocol_encoded\n4. source_port & 5. destination_port\n6. privileged_source_port (<1024)\n7. privileged_destination_port (<1024)\n8. port_difference (|dst-src|)\n9. source_ip_frequency\n10. destination_ip_frequency\n11. event_hour (0-23)\n12. day_of_week (0-6)" as feat
+    
+    prep -> feat : Preprocessed DataFrame
+}
+
+package "4. Parallel Intelligence Engines" #FFEDD5 {
+
+    package "Risk Scoring Sub-Engine (Rule-Based)" #FFF7ED {
+        component "Risk Scoring Engine\n(risk_scoring.py)\n- Base Severity Weight (15 to 90)\n- Event Type Modifier (+5 to +20)\n- Sensitive Port Bonus (+10 for 22,445,3389...)\n- Score Clamped: [0.0 , 100.0]" as risk_engine
+        
+        component "Risk Level Classifier\n- 0-24 : LOW\n- 25-49 : MEDIUM\n- 50-74 : HIGH\n- 75-100: CRITICAL" as risk_level
+        
+        feat -> risk_engine : Features & Metadata
+        risk_engine -> risk_level : Risk Score
+    }
+
+    package "Anomaly Detection Sub-Engine (Unsupervised ML)" #F0FDF4 {
+        file "Model Persistence\n(isolation_forest.joblib)" as model_file
+        
+        component "IsolationForest Model\n(anomaly_detection.py / train.py)\n- n_estimators=100\n- contamination=0.1\n- random_state=42" as iso_model
+        
+        component "Anomaly Scoring & Decision\n- Decision Function Inverted: -decision_function(X)\n- Binary Flag: is_anomaly (predict == -1)" as anomaly_decision
+        
+        model_file ..> iso_model : Load Serialized Model
+        feat -> iso_model : 12-Feature Matrix X
+        iso_model -> anomaly_decision : Decision Scores
+    }
+}
+
+package "5. Model Training Flow (Offline/On-Demand)" #FEF3C7 {
+    component "Training Pipeline\n(train.py)\nTrains IsolationForest on X & saves joblib" as trainer
+    feat ..> trainer : Fit Features
+    trainer ..> model_file : Save Model (joblib.dump)
+}
+
+package "6. Inference & Idempotent Persistence" #DCFCE7 {
+    component "Inference Pipeline\n(predict.py)\nCombines Risk Score, Level, Anomaly Score & Flag\nModel Version: v1.0.0" as predict
+    
+    database "PostgreSQL 16\ncyber-postgres :5432" as pg_target {
+        table "security_event_ml\n- event_id (FK -> security_events.event_id)\n- risk_score (0-100)\n- risk_level (LOW/MED/HIGH/CRIT)\n- anomaly_score (float)\n- is_anomaly (boolean)\n- model_version (v1.0.0)\n- processed_at (timestamp)" as sec_ml
+    }
+    
+    risk_level -> predict
+    anomaly_decision -> predict
+    predict --> sec_ml : Execute SQL ON CONFLICT (event_id)\nDO UPDATE SET risk_score=EXCLUDED..., is_anomaly=...
+}
+
+note right of sec_ml
+  **100% Idempotence** :
+  Unique Constraint + FK on event_id
+  ON CONFLICT DO UPDATE SET...
+  Guarantees zero duplicate ML rows on re-run.
+end note
+
+@enduml

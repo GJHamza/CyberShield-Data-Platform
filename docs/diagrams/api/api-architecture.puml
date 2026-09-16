@@ -1,0 +1,103 @@
+@startuml api_architecture
+
+skinparam backgroundColor #FFFFFF
+skinparam handwritten false
+skinparam shadowcasting false
+skinparam roundcorner 8
+skinparam defaultFontName "Segoe UI", Arial, sans-serif
+skinparam defaultFontSize 11
+
+skinparam package {
+    BorderColor #4A5568
+    FontColor #1A202C
+    FontSize 12
+    FontStyle bold
+    BackgroundColor #FAFAFA
+}
+
+skinparam component {
+    BorderColor #2B6CB0
+    BackgroundColor #EDF2F7
+    FontColor #2D3748
+    FontSize 11
+}
+
+skinparam database {
+    BorderColor #2C5282
+    BackgroundColor #EBF8FF
+    FontColor #2B6CB0
+    FontSize 11
+}
+
+skinparam arrow {
+    Color #4A5568
+    FontColor #2D3748
+    FontSize 10
+}
+
+title **CyberShield Data Platform — FastAPI REST API Architecture**
+
+package "1. API Consumer (Client Layer)" #FFE4E6 {
+    component "SOC Dashboard\n(Streamlit :8501)\nCyberShieldAPIClient" as client
+}
+
+package "2. FastAPI Application Container (cyber-api :8000)" #CCFBF1 {
+
+    component "FastAPI Main Application\n(main.py)\n- Prefix: /api/v1\n- CORSMiddleware (Origins, Methods, Headers)\n- OpenAPI / Swagger (/docs, /redoc)\n- Global Exception Handler (500 JSON)" as app
+
+    package "3. API Routers (routes/)" #E0F2FE {
+        component "Health Router\n(health.py)\nGET /api/v1/health" as r_health
+        component "Events Router\n(events.py)\nGET /api/v1/events\nGET /api/v1/events/{event_id}" as r_events
+        component "Alerts Router\n(alerts.py)\nGET /api/v1/alerts" as r_alerts
+        component "Statistics Router\n(statistics.py)\nGET /api/v1/statistics/overview\nGET /api/v1/statistics/severity\nGET /api/v1/statistics/event-types\nGET /api/v1/statistics/risk-levels" as r_stats
+    }
+
+    package "4. Pydantic Schemas & Validation (schemas.py)" #F3E8FF {
+        component "Response Schemas (Pydantic v2)\n- HealthResponse\n- PaginatedEventsResponse & SecurityEventDetailSchema\n- PaginatedAlertsResponse & AlertSchema\n- OverviewStatistics & DistributionResponse" as schemas
+    }
+
+    package "5. Data Access Layer (crud.py & database.py)" #FFEDD5 {
+        component "SQLAlchemy Session & Dependency\n(database.py / get_db)\n- Engine Pool (size=10, overflow=20, pre_ping=True)\n- SessionLocal" as db_session
+        
+        component "CRUD Operations\n(crud.py)\n- get_events (filter & paginate)\n- get_event_by_id (1-to-1 ML join)\n- get_alerts (SecurityEvent + SecurityEventML Join)\n- get_overview_statistics & distributions (func.count/avg)" as crud
+    }
+    
+    client --> app : HTTP REST Requests (JSON)
+    app -> r_health
+    app -> r_events
+    app -> r_alerts
+    app -> r_stats
+    
+    r_health --> db_session : Depends(get_db)
+    r_events --> crud : Call CRUD Functions
+    r_alerts --> crud : Call CRUD Functions
+    r_stats --> crud : Call CRUD Functions
+    crud --> db_session : Use Session
+    crud -> schemas : Validate & Format
+}
+
+package "6. Data Warehouse (PostgreSQL)" #E0E7FF {
+    database "PostgreSQL 16\ncyber-postgres :5432\nDatabase: cyber_platform" as pg {
+        table "security_events\n(Raw Event Facts Table)" as sec_events
+        table "security_event_ml\n(ML Predictions & Scores)" as sec_ml
+        
+        sec_events "1" -- "0..1" sec_ml : FK: event_id (ON DELETE CASCADE)
+    }
+    db_session --> pg : SQLAlchemy ORM / SQL Queries\n(psycopg2 Connection Pool)
+}
+
+note right of r_health
+  **Health Check** :
+  Executes 'SELECT 1' against PostgreSQL.
+  Returns HTTP 200 (connected)
+  or HTTP 503 if DB fails.
+end note
+
+note right of r_alerts
+  **SQL Join Relationship** :
+  Joins security_events ON event_id
+  with security_event_ml to deliver
+  enriched alerts (risk_score, is_anomaly).
+end note
+
+@enduml

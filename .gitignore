@@ -1,0 +1,40 @@
+# Environment
+.env
+.env.*
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Spark
+spark-warehouse/
+metastore_db/
+
+# Data
+datasets/*
+
+# MinIO
+infrastructure/minio/data/
+
+# PostgreSQL
+infrastructure/postgresql/data/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# ML Models & Test Caches
+*.joblib
+.pytest_cache/

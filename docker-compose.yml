@@ -1,0 +1,169 @@
+services:
+
+  postgres:
+    container_name: cyber-postgres
+
+    build:
+      context: ./infrastructure/postgresql
+
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    ports:
+      - "${POSTGRES_PORT}:5432"
+
+    volumes:
+      - ./infrastructure/postgresql/data:/var/lib/postgresql/data
+      - ./infrastructure/postgresql/init:/docker-entrypoint-initdb.d
+
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    networks:
+      - cyber-network
+
+  kafka:
+    container_name: cyber-kafka
+
+    build:
+      context: ./infrastructure/kafka
+
+    restart: unless-stopped
+
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
+    volumes:
+      - ./infrastructure/kafka/data:/tmp/kraft-combined-logs
+
+    networks:
+      - cyber-network
+
+  minio:
+    container_name: cyber-minio
+
+    build:
+      context: ./infrastructure/minio
+
+    restart: unless-stopped
+
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+
+    ports:
+      - "${MINIO_API_PORT}:9000"
+      - "${MINIO_CONSOLE_PORT}:9001"
+
+    volumes:
+      - ./infrastructure/minio/data:/data
+
+    networks:
+      - cyber-network
+
+  spark:
+    container_name: cyber-spark
+
+    build:
+      context: ./infrastructure/spark
+
+    environment:
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET: ${MINIO_BUCKET}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    depends_on:
+      - minio
+      - postgres
+
+    networks:
+      - cyber-network
+
+    volumes:
+      - ./:/opt/spark/work-dir
+      - ./infrastructure/spark/config/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
+
+    command: tail -f /dev/null
+
+  api:
+    container_name: cyber-api
+
+    build:
+      context: .
+      dockerfile: ./services/api/Dockerfile
+
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    ports:
+      - "8000:8000"
+
+    depends_on:
+      - postgres
+
+    networks:
+      - cyber-network
+
+  dashboard:
+    container_name: cyber-dashboard
+
+    build:
+      context: .
+      dockerfile: ./services/dashboard/Dockerfile
+
+    restart: unless-stopped
+
+    environment:
+      API_URL: http://cyber-api:8000
+
+    ports:
+      - "8501:8501"
+
+    depends_on:
+      - api
+
+    networks:
+      - cyber-network
+
+networks:
+  cyber-network:
+    driver: bridge

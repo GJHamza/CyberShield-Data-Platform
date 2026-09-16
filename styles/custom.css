@@ -1,0 +1,213 @@
+/* CyberShield SOC Dashboard - Professional Enterprise Theme */
+
+/* Main Container Padding */
+.block-container {
+    padding-top: 1.5rem;
+    padding-bottom: 2rem;
+    max-width: 96%;
+}
+
+/* Header Styling */
+.soc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.2rem 1.6rem;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    margin-bottom: 1.8rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.soc-title-section h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #f0f6fc;
+    margin: 0;
+    letter-spacing: 0.5px;
+}
+
+.soc-title-section p {
+    font-size: 0.88rem;
+    color: #8b949e;
+    margin: 0.2rem 0 0 0;
+}
+
+.soc-status-badges {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+}
+
+.badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.badge-success {
+    background-color: rgba(35, 134, 54, 0.2);
+    color: #3fb950;
+    border: 1px solid #238636;
+}
+
+.badge-danger {
+    background-color: rgba(218, 54, 51, 0.2);
+    color: #f85149;
+    border: 1px solid #da3633;
+}
+
+.badge-warning {
+    background-color: rgba(158, 106, 3, 0.2);
+    color: #d29922;
+    border: 1px solid #9e6a03;
+}
+
+.badge-version {
+    background-color: #21262d;
+    color: #8b949e;
+    border: 1px solid #30363d;
+}
+
+.badge-active {
+    background-color: rgba(35, 134, 54, 0.25);
+    color: #3fb950;
+    border: 1px solid #238636;
+}
+
+.badge-paused {
+    background-color: rgba(139, 148, 158, 0.2);
+    color: #8b949e;
+    border: 1px solid #30363d;
+}
+
+/* KPI Cards Styling */
+.kpi-card {
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 1.2rem;
+    text-align: left;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.kpi-card:hover {
+    border-color: #58a6ff;
+    transform: translateY(-2px);
+}
+
+.kpi-card-title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.4rem;
+}
+
+.kpi-card-value {
+    font-size: 1.9rem;
+    font-weight: 700;
+    color: #f0f6fc;
+    line-height: 1.2;
+    margin-bottom: 0.4rem;
+}
+
+.kpi-card-value.critical {
+    color: #f85149;
+}
+
+.kpi-card-value.anomaly {
+    color: #d29922;
+}
+
+.kpi-card-value.primary {
+    color: #58a6ff;
+}
+
+.kpi-card-sub {
+    font-size: 0.78rem;
+    color: #8b949e;
+}
+
+/* Plotly Container Customization */
+div[data-testid="stPlotlyChart"] {
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 0.5rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* Event Detail Card */
+.event-detail-card {
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 1rem 1.4rem;
+    margin-bottom: 1rem;
+}
+
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.detail-header h3 {
+    margin: 0;
+    color: #58a6ff;
+    font-size: 1.2rem;
+}
+
+/* Monitoring Summary Box */
+.monitoring-summary-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 1rem 1.5rem;
+    margin-top: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.summary-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.summary-val {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #f0f6fc;
+    margin-top: 0.2rem;
+}
+
+/* Sidebar Footer */
+.sidebar-footer {
+    position: fixed;
+    bottom: 1rem;
+    font-size: 0.75rem;
+    color: #8b949e;
+}

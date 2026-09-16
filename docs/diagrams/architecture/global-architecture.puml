@@ -1,0 +1,135 @@
+@startuml global_architecture
+
+skinparam backgroundColor #FFFFFF
+skinparam handwritten false
+skinparam shadowcasting false
+skinparam roundcorner 8
+skinparam defaultFontName "Segoe UI", Arial, sans-serif
+skinparam defaultFontSize 12
+
+skinparam package {
+    BorderColor #4A5568
+    FontColor #1A202C
+    FontSize 13
+    FontStyle bold
+    BackgroundColor #F7FAFC
+}
+
+skinparam component {
+    BorderColor #2B6CB0
+    BackgroundColor #EDF2F7
+    FontColor #2D3748
+    FontSize 12
+}
+
+skinparam database {
+    BorderColor #2C5282
+    BackgroundColor #EBF8FF
+    FontColor #2B6CB0
+}
+
+skinparam queue {
+    BorderColor #6B46C1
+    BackgroundColor #FAF5FF
+    FontColor #553C9E
+}
+
+skinparam node {
+    BorderColor #319795
+    BackgroundColor #E6FFFA
+    FontColor #234E52
+}
+
+skinparam arrow {
+    Color #4A5568
+    FontColor #2D3748
+    FontSize 11
+}
+
+title **CyberShield Data Platform — Architecture Globale Réelle**
+
+package "CyberShield Platform Infrastructure (Docker Network: cyber-network)" {
+
+    package "1. Data Ingestion & Messaging" #F3E8FF {
+        [Generator\n(services/generator)] as gen
+        [Producer\n(services/producer)] as prod
+        queue "Kafka Broker\ncyber-kafka :9092\n(Topic: cyber-events)" as kafka
+        [Consumer\n(services/consumer)] as cons
+        
+        gen -> prod : Event Dict
+        prod -> kafka : JSON Events
+        kafka -> cons : Stream Pull
+    }
+
+    package "2. Data Lake Storage (MinIO S3)" #E0F2FE {
+        node "MinIO Object Storage\ncyber-minio :9000 / :9001" as minio {
+            database "Bronze Layer\n(cybershield-data/bronze/events/)" as bronze
+            database "Silver Layer\n(cybershield-data/silver/events/)" as silver
+        }
+        cons --> bronze : Raw JSON Objects
+    }
+
+    package "3. ETL & Data Processing" #FFEDD5 {
+        component "Apache Spark 3.5.6 Engine\ncyber-spark" as spark {
+            [Bronze → Silver Job\n(bronze_to_silver.py)] as b2s
+            [Silver → Postgres Job\n(silver_to_postgres.py)] as s2p
+        }
+        bronze ..> b2s : Read Raw JSON
+        b2s --> silver : Write Parquet (Snappy)
+        silver ..> s2p : Read Parquet
+    }
+
+    package "4. Data Warehouse (PostgreSQL)" #E0E7FF {
+        database "PostgreSQL 16\ncyber-postgres :5432\n(DB: cyber_platform)" as postgres {
+            [security_events] as sec_events
+            [security_event_ml] as sec_ml
+        }
+        s2p --> sec_events : JDBC Upsert (Staging + ON CONFLICT)
+    }
+
+    package "5. Machine Learning Engine" #DCFCE7 {
+        component "Cyber ML Pipeline\n(services/ml)" as ml {
+            [Feature Engineering\n(12 features)] as feat
+            [Risk Scoring Engine\n(Score 0-100 & Risk Level)] as risk
+            [IsolationForest Model\n(isolation_forest.joblib)] as anomaly
+            [Inference & Upsert\n(predict.py)] as ml_pred
+        }
+        sec_events --> ml : Load Events (SQLAlchemy)
+        ml --> sec_ml : Upsert Predictions (FK: event_id)
+    }
+
+    package "6. REST API Backend (FastAPI)" #CCFBF1 {
+        component "FastAPI Application\ncyber-api :8000" as api {
+            [Health Router\n(/api/v1/health)] as r_health
+            [Events Router\n(/api/v1/events)] as r_events
+            [Alerts Router\n(/api/v1/alerts)] as r_alerts
+            [Statistics Router\n(/api/v1/statistics/*)] as r_stats
+        }
+        postgres --> api : Read Events & ML Alerts
+    }
+
+    package "7. SOC Dashboard (Streamlit UI)" #FFE4E6 {
+        component "SOC Dashboard\ncyber-dashboard :8501" as dashboard {
+            [CyberShield API Client\n(api_client.py)] as api_client
+            [KPI Cards & Visual Charts\n(Plotly / Custom CSS)] as ui
+            [Alert Center & Details Modal] as alert_center
+        }
+        api --> api_client : HTTP / REST JSON
+    }
+}
+
+note right of dashboard
+  **Architecture Découplée** :
+  Le Dashboard communique
+  EXCLUSIVEMENT via FastAPI.
+  Zéro accès direct à PostgreSQL.
+end note
+
+note right of silver
+  **Parquet Formatted** :
+  Données nettoyées,
+  normalisées et
+  partitionnées par event_date.
+end note
+
+@enduml
