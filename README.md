@@ -32,6 +32,7 @@ An **end-to-end, defensive cybersecurity data platform** engineered for real-tim
 - [6. Machine Learning](#6-machine-learning)
 - [7. REST API](#7-rest-api)
 - [8. SOC Dashboard](#8-soc-dashboard)
+- [SOC Dashboard & API Showcase](#soc-dashboard--api-showcase)
 - [9. Technology Stack](#9-technology-stack)
 - [10. Project Structure](#10-project-structure)
 - [11. Installation & Setup](#11-installation--setup)
@@ -189,6 +190,36 @@ The Security Operations Center (SOC) Dashboard is built with **Streamlit** (`ser
 - **Alert Center**: Prioritized alert cards with filtering by Risk Level, Anomaly Status, and Risk Score threshold.
 - **Security Events Inspector**: Dynamic event selection with full JSON payload & ML result inspection modal.
 - **Monitoring Controls**: Non-blocking JavaScript auto-refresh (10s, 30s, 60s, OFF) with live API and Database health indicators.
+
+---
+
+## SOC Dashboard & API Showcase
+
+CyberShield includes an interactive SOC dashboard and a REST API designed to provide real-time visibility into security events, threat levels, anomalies, and machine learning analysis.
+
+### SOC Dashboard Overview
+
+The SOC dashboard provides an operational overview of security activity through real-time KPIs, severity distributions, ML risk levels, anomaly monitoring, and system health indicators.
+
+![CyberShield SOC Dashboard Overview](docs/images/screenshots/soc-dashboard-overview.png)
+
+### Alert Center
+
+The Alert Center provides filtering and monitoring capabilities for security alerts based on risk level, anomaly status, and risk score.
+
+![CyberShield Alert Center](docs/images/screenshots/soc-alert-center.png)
+
+### Event Inspector
+
+The Event Inspector provides detailed information about individual security events together with their machine learning analysis, including risk score, risk level, anomaly score, and anomaly status.
+
+![CyberShield Event Inspector](docs/images/screenshots/soc-event-inspector.png)
+
+### FastAPI Swagger UI
+
+The FastAPI service exposes the CyberShield REST API through an OpenAPI interface for accessing events, alerts, health status, and statistical information.
+
+![CyberShield FastAPI Swagger UI](docs/images/screenshots/fastapi-swagger-ui.png)
 
 ---
 
