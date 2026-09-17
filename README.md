@@ -22,6 +22,29 @@ An **end-to-end, defensive cybersecurity data platform** engineered for real-tim
 
 ---
 
+## Table of Contents
+
+- [1. Overview](#1-overview)
+- [2. Key Features](#2-key-features)
+- [3. Architecture](#3-architecture)
+- [4. Data Engineering Pipeline](#4-data-engineering-pipeline)
+- [5. Data Lake — Bronze & Silver](#5-data-lake--bronze--silver)
+- [6. Machine Learning](#6-machine-learning)
+- [7. REST API](#7-rest-api)
+- [8. SOC Dashboard](#8-soc-dashboard)
+- [9. Technology Stack](#9-technology-stack)
+- [10. Project Structure](#10-project-structure)
+- [11. Installation & Setup](#11-installation--setup)
+- [12. Running the Platform](#12-running-the-platform)
+- [13. Testing & Validation](#13-testing--validation)
+- [14. End-to-End Results](#14-end-to-end-results)
+- [15. API Endpoints](#15-api-endpoints)
+- [16. Documentation & Diagrams](#16-documentation--diagrams)
+- [17. Future Improvements](#17-future-improvements)
+- [18. Author](#18-author)
+
+---
+
 ## 2. Key Features
 
 - **Real-Time Telemetry Streaming**: Event Generator producing structured cybersecurity event streams published to Apache Kafka (`cyber-events` topic).
@@ -252,9 +275,9 @@ CyberShield-Data-Platform/
 - **Python 3.11+**
 - **Git**
 
-### Step 1: Clone Dépôt
+### Step 1: Clone Repository
 ```bash
-git clone https://github.com/username/CyberShield-Data-Platform.git
+git clone https://github.com/GJHamza/CyberShield-Data-Platform.git
 cd CyberShield-Data-Platform
 ```
 
@@ -414,11 +437,11 @@ All architecture diagrams are documented in PlantUML (`docs/diagrams/`) and rend
 
 | Diagram Title | PlantUML Source | Rendered PNG Image |
 |---|---|---|
-| **Global Architecture** | [`global-architecture.puml`](docs/diagrams/architecture/global-architecture.puml) | ![Global Architecture](docs/images/global-architecture.png) |
-| **Data Engineering Pipeline** | [`data-pipeline.puml`](docs/diagrams/data-engineering/data-pipeline.puml) | ![Data Engineering Pipeline](docs/images/data-pipeline.png) |
-| **Machine Learning Pipeline** | [`ml-pipeline.puml`](docs/diagrams/machine-learning/ml-pipeline.puml) | ![Machine Learning Pipeline](docs/images/ml-pipeline.png) |
-| **REST API Architecture** | [`api-architecture.puml`](docs/diagrams/api/api-architecture.puml) | ![REST API Architecture](docs/images/api-architecture.png) |
-| **SOC Dashboard Architecture** | [`dashboard-architecture.puml`](docs/diagrams/dashboard/dashboard-architecture.puml) | ![SOC Dashboard Architecture](docs/images/dashboard-architecture.png) |
+| **Global Architecture** | [`global-architecture.puml`](docs/diagrams/architecture/global-architecture.puml) | [View PNG](docs/images/global-architecture.png) |
+| **Data Engineering Pipeline** | [`data-pipeline.puml`](docs/diagrams/data-engineering/data-pipeline.puml) | [View PNG](docs/images/data-pipeline.png) |
+| **Machine Learning Pipeline** | [`ml-pipeline.puml`](docs/diagrams/machine-learning/ml-pipeline.puml) | [View PNG](docs/images/ml-pipeline.png) |
+| **REST API Architecture** | [`api-architecture.puml`](docs/diagrams/api/api-architecture.puml) | [View PNG](docs/images/api-architecture.png) |
+| **SOC Dashboard Architecture** | [`dashboard-architecture.puml`](docs/diagrams/dashboard/dashboard-architecture.puml) | [View PNG](docs/images/dashboard-architecture.png) |
 
 ---
 
