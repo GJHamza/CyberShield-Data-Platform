@@ -78,8 +78,8 @@ package "2. FastAPI Application Container (cyber-api :8000)" #CCFBF1 {
 
 package "6. Data Warehouse (PostgreSQL)" #E0E7FF {
     database "PostgreSQL 16\ncyber-postgres :5432\nDatabase: cyber_platform" as pg {
-        table "security_events\n(Raw Event Facts Table)" as sec_events
-        table "security_event_ml\n(ML Predictions & Scores)" as sec_ml
+        rectangle "security_events\n(Raw Event Facts Table)" as sec_events
+        rectangle "security_event_ml\n(ML Predictions & Scores)" as sec_ml
         
         sec_events "1" -- "0..1" sec_ml : FK: event_id (ON DELETE CASCADE)
     }

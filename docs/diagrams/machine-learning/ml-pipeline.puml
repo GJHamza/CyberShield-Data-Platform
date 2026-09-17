@@ -39,7 +39,7 @@ title **CyberShield Data Platform — Machine Learning Pipeline Architecture**
 
 package "1. Data Source (PostgreSQL Warehouse)" #E0E7FF {
     database "PostgreSQL 16\ncyber-postgres :5432" as pg {
-        table "security_events\n(Raw Event Facts Table)\n- event_id (PK/UNIQUE)\n- timestamp\n- event_type, severity\n- source_ip, destination_ip\n- protocol, ports" as sec_events
+        rectangle "security_events\n(Raw Event Facts Table)\n- event_id (PK/UNIQUE)\n- timestamp\n- event_type, severity\n- source_ip, destination_ip\n- protocol, ports" as sec_events
     }
 }
 
@@ -91,7 +91,7 @@ package "6. Inference & Idempotent Persistence" #DCFCE7 {
     component "Inference Pipeline\n(predict.py)\nCombines Risk Score, Level, Anomaly Score & Flag\nModel Version: v1.0.0" as predict
     
     database "PostgreSQL 16\ncyber-postgres :5432" as pg_target {
-        table "security_event_ml\n- event_id (FK -> security_events.event_id)\n- risk_score (0-100)\n- risk_level (LOW/MED/HIGH/CRIT)\n- anomaly_score (float)\n- is_anomaly (boolean)\n- model_version (v1.0.0)\n- processed_at (timestamp)" as sec_ml
+        rectangle "security_event_ml\n- event_id (FK -> security_events.event_id)\n- risk_score (0-100)\n- risk_level (LOW/MED/HIGH/CRIT)\n- anomaly_score (float)\n- is_anomaly (boolean)\n- model_version (v1.0.0)\n- processed_at (timestamp)" as sec_ml
     }
     
     risk_level -> predict
